@@ -179,7 +179,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 - 👤 **Ganasekhar G**
 - 🌐 [LinkedIn](https://www.linkedin.com/in/ganasekhar-gif/)
-- 📧 ganasekharemail@example.com *(update with real email)*
+- 📧 ganasekharkalla@gmail.com
 
 ---
 
