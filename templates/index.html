@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multi-Disease & Heart Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            background-color: #f7f7f7;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .section {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem auto;
+            max-width: 600px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            margin-bottom: 1rem;
+            color: #34495e;
+        }
+
+        label {
+            display: block;
+            margin: 0.5rem 0 0.25rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 0.4rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        input[type="radio"] {
+            margin-right: 0.5rem;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #image-preview img {
+            max-width: 100%;
+            margin-top: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .prediction-result {
+            margin-top: 1rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        #fitbit-result {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🧠 Multi-Disease & ❤️ Heart Disease Prediction</h1>
+
+<!-- Image Prediction Section -->
+<div class="section">
+    <h2>Upload Medical Image</h2>
+    <form id="image-form" enctype="multipart/form-data" autocomplete="off">
+        <label for="image">Choose Image:</label>
+        <input type="file" id="image" name="file" accept="image/*" required autocomplete="off" />
+        <button type="submit">Predict Disease</button>
+    </form>
+    <div id="image-preview"></div>
+    <div id="image-result" class="prediction-result"></div>
+</div>
+
+<!-- Heart Disease Form -->
+<div class="section">
+    <h2>Heart Disease Prediction</h2>
+    <form id="heart-form" autocomplete="off">
+        <label>Age:</label>
+        <input type="number" name="age" required autocomplete="off" />
+
+        <label>Sex:</label>
+        <label><input type="radio" name="sex" value="1" required /> Male</label>
+        <label><input type="radio" name="sex" value="0" /> Female</label>
+
+        <label>Chest Pain Type (cp):</label>
+        <select name="cp" required>
+            <option value="0">Typical Angina</option>
+            <option value="1">Atypical Angina</option>
+            <option value="2">Non-anginal Pain</option>
+            <option value="3">Asymptomatic</option>
+        </select>
+
+        <label>Resting Blood Pressure (trestbps):</label>
+        <input type="number" name="trestbps" required autocomplete="off" />
+
+        <label>Cholesterol (chol):</label>
+        <input type="number" name="chol" required autocomplete="off" />
+
+        <label>Fasting Blood Sugar > 120 mg/dl (fbs):</label>
+        <select name="fbs" required>
+            <option value="1">True</option>
+            <option value="0">False</option>
+        </select>
+
+        <label>Resting ECG (restecg):</label>
+        <select name="restecg" required>
+            <option value="0">Normal</option>
+            <option value="1">ST-T Wave Abnormality</option>
+            <option value="2">Left Ventricular Hypertrophy</option>
+        </select>
+
+        <label>Max Heart Rate (thalach):</label>
+        <input type="number" name="thalach" required autocomplete="off" />
+
+        <label>Exercise Induced Angina (exang):</label>
+        <select name="exang" required>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select>
+
+        <label>Oldpeak:</label>
+        <input type="number" step="any" name="oldpeak" required autocomplete="off" />
+
+        <label>Slope:</label>
+        <select name="slope" required>
+            <option value="0">Upsloping</option>
+            <option value="1">Flat</option>
+            <option value="2">Downsloping</option>
+        </select>
+
+        <label>CA (Number of Major Vessels):</label>
+        <select name="ca" required>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+        </select>
+
+        <label>Thal:</label>
+        <select name="thal" required>
+            <option value="0">Normal</option>
+            <option value="1">Fixed Defect</option>
+            <option value="2">Reversible Defect</option>
+        </select>
+
+        <button type="submit">Predict Heart Disease</button>
+    </form>
+    <div id="heart-result" class="prediction-result"></div>
+</div>
+
+<!-- Fitbit Integration -->
+<div class="section">
+    <h2>Connect to Fitbit</h2>
+    <button onclick="connectFitbit()">Connect to Fitbit</button>
+
+    <div style="margin-top: 1rem;">
+        <label>Paste Access Token:</label>
+        <input type="text" id="fitbit-token" placeholder="Enter Fitbit access token" autocomplete="off" />
+        <button onclick="fetchHeartRate()">Get Resting Heart Rate</button>
+    </div>
+
+    <div id="fitbit-result"></div>
+</div>
+
+<script>
+    // Image Prediction
+    document.getElementById('image-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('image');
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/predict-image", {
+            method: "POST",
+            body: formData
+        });
+        const data = await res.json();
+
+        document.getElementById('image-result').innerText =
+            `Predicted: ${data.class_name} (Confidence: ${(data.confidence_score * 100).toFixed(2)}%)`;
+
+        const reader = new FileReader();
+        reader.onload = function () {
+            document.getElementById('image-preview').innerHTML =
+                `<img src="${reader.result}" alt="Uploaded Image" />`;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Heart Disease Prediction
+    document.getElementById('heart-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const formObj = Object.fromEntries(formData.entries());
+
+        const res = await fetch("/predict-heart", {
+            method: "POST",
+            body: new URLSearchParams(formObj)
+        });
+        const data = await res.json();
+
+        const msg = data.heart_disease_prediction === 1 ?
+            "⚠️ High Risk of Heart Disease" :
+            "✅ Low Risk of Heart Disease";
+        document.getElementById('heart-result').innerText = msg;
+    });
+
+    // Fitbit OAuth redirect
+    function connectFitbit() {
+        window.location.href = "/fitbit/connect";
+    }
+
+    // Fetch Heart Rate from Fitbit
+    async function fetchHeartRate() {
+        const token = document.getElementById("fitbit-token").value;
+        if (!token) {
+            alert("Please enter an access token.");
+            return;
+        }
+
+        const res = await fetch(`/fitbit/heart-rate?token=${token}`);
+        const data = await res.json();
+
+        if (data.resting_heart_rate) {
+            document.getElementById('fitbit-result').innerText =
+                `Resting Heart Rate: ${data.resting_heart_rate} bpm`;
+        } else {
+            document.getElementById('fitbit-result').innerText =
+                `Error fetching data: ${data.error || "Unknown error"}`;
+        }
+    }
+</script>
+
+</body>
+</html>
